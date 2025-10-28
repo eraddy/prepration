@@ -138,9 +138,8 @@ public class Employee {
 //        System.out.println(employeeList.stream().collect(Collectors.groupingBy(Employee::getDepartment,Collectors.mapping(Employee::getName,Collectors.toList()))));
 
         String s = "JAVA AND JAVA";
-        Set<Character> set = new LinkedHashSet<>();
-        set.clear();
-        System.out.println(s.chars()
+
+        return s.chars()
                 .mapToObj(i -> (char) i)
                 .collect(Collectors.groupingBy(
                         c -> c,
@@ -151,8 +150,8 @@ public class Employee {
                 .stream()
                 .filter(e -> e.getValue() == 1)
                 .findFirst()
-                .get()
-                .getKey());
+                .orElse()
+                .getKey();
 
     }
 }
