@@ -139,19 +139,7 @@ public class Employee {
 
         String s = "JAVA AND JAVA";
 
-        return s.chars()
-                .mapToObj(i -> (char) i)
-                .collect(Collectors.groupingBy(
-                        c -> c,
-                        LinkedHashMap::new,
-                        Collectors.counting()
-                ))
-                .entrySet()
-                .stream()
-                .filter(e -> e.getValue() == 1)
-                .findFirst()
-                .orElse()
-                .getKey();
+
 
     }
 }
