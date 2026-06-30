@@ -50,7 +50,7 @@ The platform is a **centralized, multi-tenant admissions hub** that connects pro
 Requirements are grouped into capability areas and given stable IDs (`FR-<area>.<n>`) so they can be traced to use cases, services, and APIs throughout the document.
 
 ### FR-1 — User Management & Access Control
-- **FR-1.1** Multi-tiered self-registration for Students, University staff (Admin/Reviewer), Counselors, Partners, and Referees.
+- **FR-1.1** Multi-tiered self-registration for Students, University staff (Admissions Officers/Reviewers), and Counselors.
 - **FR-1.2** Role-Based Access Control (RBAC) with least-privilege scopes per role and per tenant (institution).
 - **FR-1.3** Authentication with MFA; SSO/SAML/OIDC federation for institutional users.
 - **FR-1.4** Profile lifecycle: create, edit, verify (email/phone), deactivate, GDPR delete/export.
@@ -74,6 +74,8 @@ Requirements are grouped into capability areas and given stable IDs (`FR-<area>.
 - **FR-3.6** Issue offers (conditional/unconditional), rejections, and waitlist positions.
 - **FR-3.7** Manage capacity and waitlist promotion.
 
+> Note: institution-side configuration and decision-making (FR-3.1, FR-3.5, FR-3.6, FR-3.7) are performed by the **Admissions Officer / Reviewer** role.
+
 ### FR-4 — Intelligent Matching & Recommendations
 - **FR-4.1** Recommend suitable programs from a student profile.
 - **FR-4.2** Eligibility pre-checks against program rules.
@@ -92,40 +94,34 @@ Requirements are grouped into capability areas and given stable IDs (`FR-<area>.
 - **FR-6.3** Integration with external credential/identity verification services.
 - **FR-6.4** Verification status lifecycle and re-request on failure.
 
-### FR-7 — Reference & Recommendation Management
-- **FR-7.1** Student invites referees by email; system issues secure, time-bound links.
-- **FR-7.2** Referees submit **confidential** recommendations not visible to the student.
-- **FR-7.3** Automated reminders and submission tracking.
-- **FR-7.4** Reference attached to the application and released only to institutions.
+### FR-7 — Analytics & Reporting Dashboard
+- **FR-7.1** Student dashboard: application progress, deadlines, outcomes.
+- **FR-7.2** Institution dashboard: funnel (received → reviewed → offered → accepted), reviewer throughput, demographics.
+- **FR-7.3** Platform admin dashboard: usage, SLA, revenue, tenant health.
+- **FR-7.4** Custom report builder and export (CSV/PDF).
 
-### FR-8 — Analytics & Reporting Dashboard
-- **FR-8.1** Student dashboard: application progress, deadlines, outcomes.
-- **FR-8.2** Institution dashboard: funnel (received → reviewed → offered → accepted), reviewer throughput, demographics.
-- **FR-8.3** Platform admin dashboard: usage, SLA, revenue, tenant health.
-- **FR-8.4** Custom report builder and export (CSV/PDF).
+### FR-8 — Integration Capabilities
+- **FR-8.1** REST/webhook APIs for institutional SIS and CRM.
+- **FR-8.2** Payment gateway integration.
+- **FR-8.3** Credential verification service integration.
+- **FR-8.4** Inbound/outbound webhooks for status events.
 
-### FR-9 — Integration Capabilities
-- **FR-9.1** REST/webhook APIs for institutional SIS and CRM.
-- **FR-9.2** Payment gateway integration.
-- **FR-9.3** Credential verification service integration.
-- **FR-9.4** Inbound/outbound webhooks for status events.
+### FR-9 — Payment & Financial Management
+- **FR-9.1** Configurable application fees per institution/program.
+- **FR-9.2** Secure, PCI-compliant payment processing (tokenized).
+- **FR-9.3** Multi-currency support with FX display.
+- **FR-9.4** Refunds, fee waivers, receipts, and invoices.
 
-### FR-10 — Payment & Financial Management
-- **FR-10.1** Configurable application fees per institution/program.
-- **FR-10.2** Secure, PCI-compliant payment processing (tokenized).
-- **FR-10.3** Multi-currency support with FX display.
-- **FR-10.4** Refunds, fee waivers, receipts, and invoices.
+### FR-10 — Compliance & Audit
+- **FR-10.1** Immutable audit trail of all material actions.
+- **FR-10.2** Data privacy compliance (GDPR/FERPA): consent, retention, right-to-erasure.
+- **FR-10.3** Regulatory and statutory reporting.
+- **FR-10.4** Configurable data residency per tenant.
 
-### FR-11 — Compliance & Audit
-- **FR-11.1** Immutable audit trail of all material actions.
-- **FR-11.2** Data privacy compliance (GDPR/FERPA): consent, retention, right-to-erasure.
-- **FR-11.3** Regulatory and statutory reporting.
-- **FR-11.4** Configurable data residency per tenant.
-
-### FR-12 — Multi-Channel Access
-- **FR-12.1** Responsive web and mobile-optimized experiences.
-- **FR-12.2** WCAG 2.1 AA accessibility.
-- **FR-12.3** Internationalization/localization (i18n/l10n).
+### FR-11 — Multi-Channel Access
+- **FR-11.1** Responsive web and mobile-optimized experiences.
+- **FR-11.2** WCAG 2.1 AA accessibility.
+- **FR-11.3** Internationalization/localization (i18n/l10n).
 
 ---
 
@@ -156,11 +152,8 @@ Actors are split into **primary** (initiate value), **supporting/system** (exter
 | Actor | Description | Key goals |
 |---|---|---|
 | **Prospective Student / Applicant** | Person seeking admission. | Build profile, get recommendations, apply to many institutions, track status, pay, accept offers. |
-| **Admissions Officer / Reviewer** | Institution staff who evaluates applications. | Review, score, comment, recommend decisions. |
-| **Institution Administrator** | Manages an institution tenant. | Configure programs, deadlines, rules, reviewer assignments, capacity. |
+| **Admissions Officer / Reviewer** | Institution staff who configure the institution's offering and evaluate applications. | Configure programs, intakes, deadlines, eligibility rules; assign reviewers and manage capacity; review, score, comment; record decisions and issue offers/rejections/waitlist positions; view institution analytics. |
 | **Counselor / Advisor** | Guides students (school or independent). | Assist/track student applications (with consent), advise. |
-| **Referee / Recommender** | Submits confidential references. | Submit recommendation securely on time. |
-| **Partner Organization** | Agencies, sponsors, recruiters. | Manage cohorts of applicants, view aggregate status. |
 | **Platform Administrator** | Operates the platform itself. | Onboard tenants, monitor health, manage compliance, configuration. |
 
 ### Supporting / external system actors
@@ -204,14 +197,13 @@ The decomposition is **Domain-Driven Design first**, not technology-first. The m
 | 4 | **Application Service** | Application (core) | Application aggregate, drafts, submission, status orchestration | Application, ApplicationItem, ApplicationStatus | The transactional heart; high write volume; orchestrates other contexts. |
 | 5 | **Document Service** | Documents | Upload, storage, format/AV validation | Document, DocumentMetadata | Heavy I/O + storage; scales independently; spikes on deadlines. |
 | 6 | **Verification Service** | Verification | Credential/identity verification via external providers | VerificationRequest, VerificationResult | Wraps slow external calls; isolates third-party failure. |
-| 7 | **Reference Service** | References | Confidential referee workflow & submission | ReferenceRequest, Recommendation | Strict confidentiality boundary distinct from student-visible data. |
-| 8 | **Review & Decision Service** | Admissions Review | Reviewer assignment, scoring, decisions, offers, waitlist | Review, Score, Decision, Offer, ReviewerAssignment | Institution-side workflow with its own rules and collaboration model. |
-| 9 | **Matching & Recommendation Service** | Recommendations | AI-driven program suggestions & eligibility scoring | RecommendationSet, MatchScore | ML/compute profile differs entirely from CRUD services. |
-| 10 | **Communication / Notification Service** | Communication | Messaging, notifications, multi-channel delivery | Message, Notification, Template, Preference | Bursty fan-out workload; decoupled via events. |
-| 11 | **Payment Service** | Payments | Fees, multi-currency, refunds, waivers, receipts | Payment, Invoice, Refund, FeeWaiver | PCI scope must be isolated; integrates a regulated external gateway. |
-| 12 | **Analytics & Reporting Service** | Analytics | KPIs, dashboards, custom reports, exports | ReportDefinition, Metric, Dashboard | Read-optimized (CQRS read side); must not burden transactional stores. |
-| 13 | **Integration / Gateway Service** | Integration | Outbound/inbound APIs & webhooks to SIS/CRM/external | IntegrationConfig, WebhookSubscription | Anti-corruption layer shielding the core from external schemas. |
-| 14 | **Audit & Compliance Service** | Compliance | Immutable audit trail, consent ledger, retention, regulatory reports | AuditEvent, Consent, RetentionPolicy | Must be append-only, tamper-evident, separately governed. |
+| 7 | **Review & Decision Service** | Admissions Review | Reviewer assignment, scoring, decisions, offers, waitlist | Review, Score, Decision, Offer, ReviewerAssignment | Institution-side workflow with its own rules and collaboration model. |
+| 8 | **Matching & Recommendation Service** | Recommendations | AI-driven program suggestions & eligibility scoring | RecommendationSet, MatchScore | ML/compute profile differs entirely from CRUD services. |
+| 9 | **Communication / Notification Service** | Communication | Messaging, notifications, multi-channel delivery | Message, Notification, Template, Preference | Bursty fan-out workload; decoupled via events. |
+| 10 | **Payment Service** | Payments | Fees, multi-currency, refunds, waivers, receipts | Payment, Invoice, Refund, FeeWaiver | PCI scope must be isolated; integrates a regulated external gateway. |
+| 11 | **Analytics & Reporting Service** | Analytics | KPIs, dashboards, custom reports, exports | ReportDefinition, Metric, Dashboard | Read-optimized (CQRS read side); must not burden transactional stores. |
+| 12 | **Integration / Gateway Service** | Integration | Outbound/inbound APIs & webhooks to SIS/CRM/external | IntegrationConfig, WebhookSubscription | Anti-corruption layer shielding the core from external schemas. |
+| 13 | **Audit & Compliance Service** | Compliance | Immutable audit trail, consent ledger, retention, regulatory reports | AuditEvent, Consent, RetentionPolicy | Must be append-only, tamper-evident, separately governed. |
 
 **Cross-cutting platform components (not domain services):** API Gateway, Service Discovery/Config, Message Broker (event bus), centralized Observability stack. These are infrastructure, deliberately kept out of the domain service list.
 
@@ -230,10 +222,8 @@ Mermaid has no native UML use-case notation, so actors are rendered as nodes and
 flowchart LR
   %% Actors
   STU([Student])
-  REV([Reviewer])
-  ADM([Institution Admin])
+  REV([Admissions Officer / Reviewer])
   CNS([Counselor])
-  REF([Referee])
   PADM([Platform Admin])
   PAY[[Payment Gateway]]
   VER[[Credential Verifier]]
@@ -246,26 +236,22 @@ flowchart LR
     UC5(Upload Documents)
     UC6(Track Application Status)
     UC7(Pay Application Fee)
-    UC8(Invite Referee)
-    UC9(Submit Confidential Reference)
-    UC10(Configure Programs & Rules)
-    UC11(Review & Score Application)
-    UC12(Make Decision / Issue Offer)
-    UC13(Accept / Decline Offer)
-    UC14(View Analytics Dashboard)
-    UC15(Manage Tenants & Compliance)
-    UC16(Verify Credentials)
+    UC8(Configure Programs & Rules)
+    UC9(Review & Score Application)
+    UC10(Make Decision / Issue Offer)
+    UC11(Accept / Decline Offer)
+    UC12(View Analytics Dashboard)
+    UC13(Manage Tenants & Compliance)
+    UC14(Verify Credentials)
   end
 
-  STU --- UC1 & UC2 & UC3 & UC4 & UC5 & UC6 & UC7 & UC8 & UC13
+  STU --- UC1 & UC2 & UC3 & UC4 & UC5 & UC6 & UC7 & UC11
   CNS --- UC2 & UC6
-  REF --- UC9
-  ADM --- UC1 & UC10 & UC12 & UC14
-  REV --- UC1 & UC11
-  PADM --- UC15 & UC14
+  REV --- UC1 & UC8 & UC9 & UC10 & UC12
+  PADM --- UC13 & UC12
   UC7 -.-> PAY
-  UC16 -.-> VER
-  UC5 -.-> UC16
+  UC14 -.-> VER
+  UC5 -.-> UC14
 ```
 
 ---
@@ -293,18 +279,14 @@ classDiagram
   }
   class Reviewer {
     +UUID institutionId
-    +scoreApplication()
-    +addComment()
-  }
-  class InstitutionAdmin {
     +configureProgram()
     +assignReviewer()
+    +scoreApplication()
+    +addComment()
+    +recordDecision()
   }
   class Counselor {
     +assistStudent()
-  }
-  class Referee {
-    +submitReference()
   }
 
   class StudentProfile {
@@ -341,11 +323,6 @@ classDiagram
     +DocType type
     +VerificationStatus vStatus
   }
-  class Reference {
-    +UUID id
-    +boolean confidential
-    +ReferenceStatus status
-  }
   class Review {
     +UUID id
     +int score
@@ -376,9 +353,7 @@ classDiagram
 
   User <|-- Student
   User <|-- Reviewer
-  User <|-- InstitutionAdmin
   User <|-- Counselor
-  User <|-- Referee
 
   Student "1" --> "1" StudentProfile
   Student "1" --> "*" Application
@@ -386,8 +361,6 @@ classDiagram
   ApplicationItem "*" --> "1" Program
   Institution "1" --> "*" Program
   Application "1" --> "*" Document
-  Application "1" --> "*" Reference
-  Referee "1" --> "*" Reference
   ApplicationItem "1" --> "*" Review
   Reviewer "1" --> "*" Review
   ApplicationItem "1" --> "0..1" Decision
@@ -415,7 +388,6 @@ classDiagram
   class progDS["progDS : Program (Stanford, MSc DS)"]
   class transcript["transcript : Document (VERIFIED)"]
   class sop["sop : Document (PENDING)"]
-  class refSmith["refSmith : Reference (SUBMITTED, confidential)"]
   class payMIT["payMIT : Payment (CAPTURED, USD 75)"]
   class offerStan["offerStan : Offer (UNCONDITIONAL)"]
 
@@ -427,7 +399,6 @@ classDiagram
   itemStan --> progDS
   app1001 --> transcript
   app1001 --> sop
-  app1001 --> refSmith
   app1001 --> payMIT
   itemStan --> offerStan
 ```
@@ -451,7 +422,6 @@ erDiagram
 
   APPLICATION ||--o{ APPLICATION_ITEM : contains
   APPLICATION ||--o{ DOCUMENT : includes
-  APPLICATION ||--o{ REFERENCE : includes
   APPLICATION ||--o{ PAYMENT : has
 
   APPLICATION_ITEM ||--o{ REVIEW : receives
@@ -507,13 +477,6 @@ erDiagram
     uuid application_id FK
     string type
     string verification_status
-  }
-  REFERENCE {
-    uuid id PK
-    uuid application_id FK
-    uuid referee_id FK
-    bool confidential
-    string status
   }
   REVIEW {
     uuid id PK
@@ -644,8 +607,7 @@ flowchart TD
   E -- No --> D
   E -- Yes --> F[Create Application & add programs]
   F --> G[Upload Documents]
-  G --> H[Invite Referees]
-  H --> I{Application complete?}
+  G --> I{Application complete?}
   I -- No --> G
   I -- Yes --> J[Pay Application Fee]
   J --> K{Payment successful?}
@@ -715,7 +677,7 @@ REST over HTTPS, JSON bodies, OAuth2/OIDC bearer tokens, tenant-scoped, versione
 | Profile | `PUT /api/v1/students/{id}/profile` | Update profile | Student |
 | Catalog | `GET /api/v1/institutions` | List institutions | Any |
 | Catalog | `GET /api/v1/programs?institutionId=` | List/filter programs | Any |
-| Catalog | `POST /api/v1/institutions/{id}/programs` | Create a program | Inst. Admin |
+| Catalog | `POST /api/v1/institutions/{id}/programs` | Create a program | Admissions Officer |
 | Application | `POST /api/v1/applications` | Create draft application | Student |
 | Application | `POST /api/v1/applications/{id}/items` | Add a program target | Student |
 | Application | `POST /api/v1/applications/{id}/submit` | Submit application | Student |
@@ -723,18 +685,16 @@ REST over HTTPS, JSON bodies, OAuth2/OIDC bearer tokens, tenant-scoped, versione
 | Application | `POST /api/v1/applications/{id}/withdraw` | Withdraw | Student |
 | Document | `POST /api/v1/applications/{id}/documents` | Upload document | Student |
 | Document | `GET /api/v1/documents/{id}/status` | Verification status | Student/Inst. |
-| Reference | `POST /api/v1/applications/{id}/references/invite` | Invite a referee | Student |
-| Reference | `POST /api/v1/references/{token}/submit` | Submit confidential reference | Referee (token) |
 | Matching | `GET /api/v1/students/{id}/recommendations` | Get program recommendations | Student |
 | Review | `GET /api/v1/institutions/{id}/queue` | Review queue | Reviewer |
 | Review | `POST /api/v1/items/{id}/reviews` | Submit score/comments | Reviewer |
-| Review | `POST /api/v1/items/{id}/decision` | Record decision/offer | Inst. Admin |
+| Review | `POST /api/v1/items/{id}/decision` | Record decision/offer | Admissions Officer |
 | Application | `POST /api/v1/offers/{id}/respond` | Accept/decline offer | Student |
 | Payment | `POST /api/v1/applications/{id}/payments` | Pay application fee | Student |
-| Payment | `POST /api/v1/payments/{id}/refund` | Refund | Inst. Admin |
+| Payment | `POST /api/v1/payments/{id}/refund` | Refund | Admissions Officer |
 | Notification | `GET /api/v1/users/{id}/notifications` | List notifications | User |
-| Analytics | `GET /api/v1/institutions/{id}/analytics` | Institution KPIs | Inst. Admin |
-| Integration | `POST /api/v1/webhooks/subscriptions` | Register a webhook | Inst. Admin |
+| Analytics | `GET /api/v1/institutions/{id}/analytics` | Institution KPIs | Admissions Officer |
+| Integration | `POST /api/v1/webhooks/subscriptions` | Register a webhook | Admissions Officer |
 | Audit | `GET /api/v1/audit?entityId=` | Query audit trail | Platform Admin |
 
 ### 14.2 Representative OpenAPI fragment
@@ -784,7 +744,7 @@ components:
           scopes:
             student: Student actions
             reviewer: Reviewer actions
-            admin: Institution admin actions
+            staff: Admissions officer (institution staff) actions
 ```
 
 ---
@@ -797,8 +757,8 @@ components:
 |---|---|
 | **S — Single Responsibility** | Each microservice maps to exactly one business capability with one reason to change (e.g., Payment ≠ Application). At class level, `Application` orchestrates application state while `Payment`, `Document`, `Review` own their own concerns. |
 | **O — Open/Closed** | New notification channels, payment providers, or credential verifiers are added by implementing an interface (`NotificationChannel`, `PaymentProvider`, `Verifier`) — no change to existing code. New document types extend the validation strategy registry. |
-| **L — Liskov Substitution** | `Student`, `Reviewer`, `Counselor`, `Referee` all substitute for `User` wherever a `User` is expected (auth, notifications) without breaking behavior. Any `PaymentProvider` implementation is interchangeable behind the Payment Service. |
-| **I — Interface Segregation** | Role-specific, narrow API contracts: a Reviewer client depends only on review endpoints, never on payment or admin contracts. Internal ports are split (`DocumentValidator` vs `CredentialVerifier`) so consumers don't depend on methods they don't use. |
+| **L — Liskov Substitution** | `Student`, `Reviewer`, and `Counselor` all substitute for `User` wherever a `User` is expected (auth, notifications) without breaking behavior. Any `PaymentProvider` implementation is interchangeable behind the Payment Service. |
+| **I — Interface Segregation** | Role-specific, narrow API contracts: a Reviewer client depends only on review endpoints, never on payment contracts it does not use. Internal ports are split (`DocumentValidator` vs `CredentialVerifier`) so consumers don't depend on methods they don't use. |
 | **D — Dependency Inversion** | Services depend on abstractions (ports) not concretions: the Application Service depends on a `PaymentPort`, not on Stripe/PayPal; integrations are injected adapters (Hexagonal/Ports-and-Adapters). The external gateway is an implementation detail. |
 
 ### 15.2 KISS (Keep It Simple)
@@ -808,8 +768,8 @@ components:
 - **Reuse a single Notification Service** for all channels instead of bespoke notification logic in each service.
 
 ### 15.3 YAGNI (You Aren't Gonna Need It)
-- **No speculative nano-services** — e.g., Verification and external credential checks live in one Verification Service until load proves a split is needed; Reference and Review are kept separate only because confidentiality rules genuinely differ.
-- **No premature multi-region/data-residency engine** — residency is a configurable policy hook (FR-11.4), implemented when a tenant actually requires it, not pre-built.
+- **No speculative nano-services** — e.g., Verification and external credential checks live in one Verification Service until load proves a split is needed.
+- **No premature multi-region/data-residency engine** — residency is a configurable policy hook (FR-10.4), implemented when a tenant actually requires it, not pre-built.
 - **No custom ML platform** — Matching Service starts with rules + a hosted model; a bespoke training pipeline is deferred until recommendation quality demands it.
 - **NFRs documented but implemented incrementally** — autoscaling and observability are foundational; exotic capabilities (e.g., real-time fraud scoring on payments) are deferred until justified.
 
@@ -818,3 +778,4 @@ components:
 ### Document Notes
 - Each diagram is authored in Mermaid so it renders in compatible viewers and remains version-controllable and editable.
 - Requirement IDs (`FR-x.y`, `NFR-n`) are stable anchors for traceability across the use cases, services, and APIs.
+- **Revision:** Removed the *Institution Administrator*, *Referee / Recommender*, and *Partner Organization* actors. Institution-administration duties were merged into the **Admissions Officer / Reviewer** role; the reference/recommendation capability (formerly FR-7, the Reference Service, and related entities/endpoints) was removed in full. FR and use-case IDs were renumbered to stay sequential.
