@@ -126,20 +126,21 @@ Requirements are grouped into capability areas and given stable IDs (`FR-<area>.
 ---
 
 ## 3. Non-Functional Requirements
-*(Optional per the kata — included because they directly shape the architecture.)*
+*(Optional per the kata — included because they directly shape the architecture. Compliance/security/accessibility/residency requirements below are scoped to an **India** deployment.)*
 
-| # | Category | Requirement |
+| # | Category | Requirement (India-specific) |
 |---|---|---|
-| NFR-1 | **Performance** | P95 API latency < 500 ms for reads; < 1.5 s for writes under nominal load. |
-| NFR-2 | **Scalability** | Horizontal autoscaling; absorb 10× application volume during peak admission windows without degradation. |
+| NFR-1 | **Performance** | P95 API latency < 500 ms for reads; < 1.5 s for writes under nominal load. Degrade gracefully on low-bandwidth (2G/3G) connectivity common in tier-2/3 regions. |
+| NFR-2 | **Scalability** | Horizontal autoscaling; absorb 10× application volume during national admission windows (e.g., CUET / board-result season) without degradation. |
 | NFR-3 | **Availability** | 99.9% monthly uptime; no single point of failure; graceful degradation of non-critical services. |
-| NFR-4 | **Security** | Encryption in transit (TLS 1.2+) and at rest; tokenized payments; OWASP Top-10 hardening; secrets management. |
-| NFR-5 | **Privacy & Compliance** | GDPR/FERPA by design; consent ledger; configurable retention and residency. |
+| NFR-4 | **Security** | Encryption in transit (TLS 1.2+) and at rest; OWASP Top-10 hardening; secrets management. Payments: **PCI-DSS** plus **RBI card-on-file tokenisation** — no raw card data stored by the platform (tokens only), with mandatory two-factor / Additional Factor of Authentication (AFA). |
+| NFR-5 | **Privacy & Compliance** | Compliance with the **Digital Personal Data Protection (DPDP) Act, 2023** and **DPDP Rules, 2025**: consent-first processing, data-principal rights (access / correct / erase), **verifiable parental consent for minors**, and breach notification to the **Data Protection Board of India**. Phased readiness toward full enforcement on **13 May 2027**. (FERPA/GDPR do not apply in India; sector norms — UGC/AICTE/NEP 2020 — inform statutory reporting.) |
 | NFR-6 | **Reliability/Consistency** | Eventual consistency across services via events; exactly-once side-effects via idempotency keys + outbox pattern. |
-| NFR-7 | **Observability** | Centralized logs, metrics, distributed tracing; correlation IDs end-to-end. |
+| NFR-7 | **Observability** | Centralized logs, metrics, distributed tracing; correlation IDs end-to-end. Maintain **personal-data flow lineage** to evidence DPDP accountability and support audit. |
 | NFR-8 | **Maintainability** | Independently deployable services; contract-tested APIs; SOLID/KISS/YAGNI adherence. |
-| NFR-9 | **Usability/Accessibility** | WCAG 2.1 AA; localized; mobile-first. |
-| NFR-10 | **Interoperability** | Open REST + webhook contracts; standards-based auth (OIDC/SAML). |
+| NFR-9 | **Usability/Accessibility** | Conformance to the **RPwD Act, 2016** and **IS 17802 (BIS)**, with **WCAG 2.1 AA** as the baseline (and **GIGW 3.0** where government-linked). Provide ISL video, captions, and alt-text; multilingual UI across major Indian languages. |
+| NFR-10 | **Interoperability** | Open REST + webhook contracts; standards-based auth (OIDC/SAML). Integrate with India digital public infrastructure: **DigiLocker / National Academic Depository** for credential verification, **Aadhaar e-KYC** (consent-based) for identity, **UPI** for payments, and **APAAR / Academic Bank of Credits** where applicable. |
+| NFR-11 | **Data Residency & Localization** | Store payment/transaction data **within India** per RBI localization; apply DPDP cross-border transfer controls to personal data; per-tenant residency configuration. |
 
 ---
 
